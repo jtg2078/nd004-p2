@@ -6,6 +6,22 @@
 import psycopg2
 
 
+# def create_default_tournament_if_needed(tournament_id):
+#     db = psycopg2.connect("dbname=tournament")
+#     c = db.cursor()
+#     c.execute("select count(*) from tournaments where id = (%s);", (tournament_id, ))
+#     row = c.fetchone()
+#     if int(row[0]) == 0:
+#         c.execute("insert into tournaments (id) values (%s);", (tournament_id, ))
+#         db.commit()
+#     db.close()
+#
+#
+# # create a default tournament if not exists
+# DEFAULT_TOURNAMENT_ID = 1
+# create_default_tournament_if_needed(DEFAULT_TOURNAMENT_ID)
+
+
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
     return psycopg2.connect("dbname=tournament")
@@ -13,14 +29,30 @@ def connect():
 
 def deleteMatches():
     """Remove all the match records from the database."""
+    db = connect()
+    c = db.cursor()
+    c.execute("delete from matches")
+    db.commit()
+    db.close()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
+    db = connect()
+    c = db.cursor()
+    c.execute("delete from players")
+    db.commit()
+    db.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
+    db = connect()
+    c = db.cursor()
+    c.execute("select count(*) from players")
+    row = c.fetchone()
+    db.close()
+    return int(row[0])
 
 
 def registerPlayer(name):
@@ -32,6 +64,11 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
+    db = connect()
+    c = db.cursor()
+    c.execute("insert into players (name) values (%s);", (name,))
+    db.commit()
+    db.close()
 
 
 def playerStandings():
@@ -47,6 +84,43 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    db = connect()
+    c = db.cursor()
+    c.execute("""
+        select
+            id, name,
+            COALESCE(wins, 0) as wins,
+            COALESCE(wins, 0) + COALESCE(losses, 0) as matches
+        from
+            players
+            left join
+                (
+                    select
+                        winner, count(winner) as wins
+                    from
+                        matches
+                    group by
+                        winner
+                ) as winners
+            on
+                players.id = winners.winner
+            left join
+                (
+                    select
+                        loser, count(loser) as losses
+                    from
+                        matches
+                    group by
+                        loser
+                ) as losers
+            on
+                players.id = losers.loser
+        order by
+            wins desc;
+    """)
+    rows = c.fetchall()
+    db.close()
+    return rows
 
 
 def reportMatch(winner, loser):
@@ -56,8 +130,13 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
- 
+    db = connect()
+    c = db.cursor()
+    c.execute("insert into matches (winner, loser) values (%s, %s)", (winner, loser))
+    db.commit()
+    db.close()
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
   
@@ -73,5 +152,9 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-
-
+    standings = playerStandings()
+    pairs =  [(standings[x][0],
+               standings[x][1],
+               standings[x+1][0],
+               standings[x+1][1]) for x in xrange(0, len(standings), 2)]
+    return pairs
