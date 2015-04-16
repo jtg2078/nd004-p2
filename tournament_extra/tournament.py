@@ -8,14 +8,17 @@ import psycopg2
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    return psycopg2.connect("dbname=tournament_extra")
 
 
-def deleteMatches():
+def deleteMatches(tournament=None):
     """Remove all the match records from the database."""
     db = connect()
     c = db.cursor()
-    c.execute("delete from matches")
+    if tournament:
+        c.execute("delete from matches where tournament = %s", (tournament, ))
+    else:
+        c.execute("delete from matches")
     db.commit()
     db.close()
 
@@ -29,11 +32,48 @@ def deletePlayers():
     db.close()
 
 
+def deleteTournamentPlayers(tournament=None):
+    """Remove all the player records from the database."""
+    db = connect()
+    c = db.cursor()
+    if tournament:
+        c.execute("delete from tournament_players where tournament = %s", (tournament, ))
+    else:
+        c.execute("delete from tournament_players")
+    db.commit()
+    db.close()
+
+
+def deleteTournaments(tournament=None):
+    """Remove all the player records from the database."""
+    db = connect()
+    c = db.cursor()
+    if tournament:
+        c.execute("delete from tournaments where id = %s", (tournament, ))
+    else:
+        c.execute("delete from tournaments")
+    db.commit()
+    db.close()
+
+
 def countPlayers():
     """Returns the number of players currently registered."""
     db = connect()
     c = db.cursor()
     c.execute("select count(*) from players")
+    row = c.fetchone()
+    db.close()
+    return int(row[0])
+
+
+def countTournamentPlayers(tournament=None):
+    """Returns the number of players currently registered."""
+    db = connect()
+    c = db.cursor()
+    if tournament:
+        c.execute("select count(*) from tournament_players where tournament = %s", (tournament, ))
+    else:
+        c.execute("select count(*) from tournament_players")
     row = c.fetchone()
     db.close()
     return int(row[0])
@@ -50,12 +90,44 @@ def registerPlayer(name):
     """
     db = connect()
     c = db.cursor()
-    c.execute("insert into players (name) values (%s);", (name,))
+    c.execute("insert into players (name) values (%s) RETURNING id;", (name,))
     db.commit()
+    player_id = c.fetchone()[0]
     db.close()
+    return int(player_id)
 
 
-def playerStandings():
+def registerTournament(name):
+    """Adds a tournament to the tournament_extra database."""
+    db = connect()
+    c = db.cursor()
+    c.execute("insert into tournaments (name) values (%s) RETURNING id;", (name,))
+    db.commit()
+    tournament_id = c.fetchone()[0]
+    db.close()
+    return int(tournament_id)
+
+
+def registerTournamentPlayer(player, tournament):
+    """Adds a player to the tournament database.
+
+    The database assigns a unique serial id number for the player.  (This
+    should be handled by your SQL database schema, not in your Python code.)
+
+    Args:
+      name: the player's full name (need not be unique).
+    """
+    db = connect()
+    c = db.cursor()
+    c.execute("insert into tournament_players (id, player, tournament) values (%s, %s, %s) RETURNING id;",
+              ("{0}-{1}".format(tournament, player), player, tournament))
+    db.commit()
+    tournament_player_id = c.fetchone()[0]
+    db.close()
+    return tournament_player_id
+
+
+def tournamentPlayerStandings(tournament):
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
@@ -72,42 +144,54 @@ def playerStandings():
     c = db.cursor()
     c.execute("""
         select
-            id, name,
+            tournament_players.id,
+            players.name,
             COALESCE(wins, 0) as wins,
             COALESCE(wins, 0) + COALESCE(losses, 0) as matches
         from
-            players
+            tournament_players
             left join
                 (
                     select
                         winner, count(winner) as wins
                     from
                         matches
+                    where
+                        tournament = %(tournament)s
                     group by
                         winner
                 ) as winners
             on
-                players.id = winners.winner
+                tournament_players.id = winners.winner
             left join
                 (
                     select
                         loser, count(loser) as losses
                     from
                         matches
+                    where
+                        tournament = %(tournament)s
                     group by
                         loser
                 ) as losers
             on
-                players.id = losers.loser
+                tournament_players.id = losers.loser
+            join
+                players
+            on
+                tournament_players.player = players.id
+        where
+            tournament_players.tournament = %(tournament)s
         order by
-            wins desc;
-    """)
+            wins desc,
+            tournament_players.id
+    """, {'tournament': tournament})
     rows = c.fetchall()
     db.close()
     return rows
 
 
-def reportMatch(winner, loser):
+def reportMatch(tournament, winner, loser):
     """Records the outcome of a single match between two players.
 
     Args:
@@ -116,12 +200,12 @@ def reportMatch(winner, loser):
     """
     db = connect()
     c = db.cursor()
-    c.execute("insert into matches (winner, loser) values (%s, %s)", (winner, loser))
+    c.execute("insert into matches (tournament, winner, loser) values (%s, %s, %s)", (tournament, winner, loser))
     db.commit()
     db.close()
 
 
-def swissPairings():
+def swissPairings(tournament):
     """Returns a list of pairs of players for the next round of a match.
   
     Assuming that there are an even number of players registered, each player
@@ -136,7 +220,7 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-    standings = playerStandings()
+    standings = tournamentPlayerStandings(tournament)
     pairs =  [(standings[x][0],
                standings[x][1],
                standings[x+1][0],
