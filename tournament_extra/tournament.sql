@@ -8,10 +8,10 @@
 
 
 -- reset everything
-drop table matches CASCADE;
-drop table tournament_players CASCADE;
-drop table tournaments CASCADE;
-drop table players CASCADE;
+drop table IF EXISTS matches CASCADE;
+drop table IF EXISTS tournament_players CASCADE;
+drop table IF EXISTS tournaments CASCADE;
+drop table IF EXISTS players CASCADE;
 drop function IF EXISTS opponent_match_wins(winner_id text);
 
 -- player table
