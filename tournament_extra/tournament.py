@@ -127,7 +127,7 @@ def registerTournamentPlayer(player, tournament):
     return tournament_player_id
 
 
-def tournamentPlayerStandings(tournament):
+def tournamentPlayerStandings(tournament, with_bye=False):
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
@@ -148,6 +148,7 @@ def tournamentPlayerStandings(tournament):
             players.name,
             tournament_players.wins,
             tournament_players.matches
+            {extra}
         from
             tournament_players
             join
@@ -160,7 +161,7 @@ def tournamentPlayerStandings(tournament):
             wins desc,
             opponent_match_wins(tournament_players.id) desc,
             tournament_players.id
-    """, {'tournament': tournament})
+    """.format(extra=', tournament_players.had_bye' if with_bye else ''), {'tournament': tournament})
     rows = c.fetchall()
     db.close()
     return rows
@@ -198,6 +199,21 @@ def reportTiedMatch(tournament, p1, p2):
     db.close()
 
 
+def reportByeMatch(tournament, winner):
+    """Records the outcome of a bye match.
+
+    Args:
+      winner:  the id number of the player who won
+    """
+    db = connect()
+    c = db.cursor()
+    c.execute("""update tournament_players
+                 set wins = wins + 1, matches = matches + 1, had_bye = TRUE
+                 where id = %s""", (winner, ))
+    db.commit()
+    db.close()
+
+
 def swissPairings(tournament):
     """Returns a list of pairs of players for the next round of a match.
   
@@ -213,7 +229,26 @@ def swissPairings(tournament):
         id2: the second player's unique id
         name2: the second player's name
     """
-    standings = tournamentPlayerStandings(tournament)
+    standings = tournamentPlayerStandings(tournament, with_bye=True)
+    if len(standings) % 2 != 0:
+        """
+        with odd number of players, the following rule is used to find player for bye match
+            1. iterate through the standing from top to bottom
+            2. for each player
+                - if player's had_bye is FALSE
+                    - assign this player to have bye match for this round
+                - else
+                    - continue to next player
+        """
+        player_found = False
+        for i in range(len(standings)):
+            had_bye = standings[i][4]
+            if had_bye is False:
+                standings.insert(i+1, ('bye', 'bye', 0, 0))
+                player_found = True
+                break
+        if player_found is False:
+            raise ValueError("Unable to setup bye match, every players already had bye match")
     pairs =  [(standings[x][0],
                standings[x][1],
                standings[x+1][0],

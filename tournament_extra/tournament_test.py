@@ -307,18 +307,44 @@ def testEvenMatches():
     print "11. With two tied mathces, players with one win should be paired"
 
 
+def testForOddPlayersTournament():
+    deleteMatches()
+    deletePlayers()
+    deleteTournamentPlayers()
+    deleteTournaments()
+    # players
+    a = registerPlayer("1")
+    b = registerPlayer("2")
+    c = registerPlayer("3")
+    # tournament
+    t1 = registerTournament('Very Odd')
+    registerTournamentPlayer(a, t1)
+    registerTournamentPlayer(b, t1)
+    registerTournamentPlayer(c, t1)
+    standings = tournamentPlayerStandings(t1)
+    [id1, id2, id3] = [row[0] for row in standings]
+    # 1st round
+    reportMatch(t1, id2, id1)
+    reportByeMatch(t1, id3)
+    correct_pairs = set([frozenset([id2, 'bye']),
+                         frozenset([id3, id1])])
+    verifyStandings(correct_pairs, t1)
+    print "12. with odd number of players, bye match is added"
+
+
 if __name__ == '__main__':
-    # testDeleteMatches()
-    # testDelete()
-    # testCount()
-    # testRegister()
-    # testRegisterCountDelete()
-    # testStandingsBeforeMatches()
-    # testReportMatches()
-    # testPairings()
-    # testMultipleTournaments()
-    # testComplicatedTournament()
+    testDeleteMatches()
+    testDelete()
+    testCount()
+    testRegister()
+    testRegisterCountDelete()
+    testStandingsBeforeMatches()
+    testReportMatches()
+    testPairings()
+    testMultipleTournaments()
+    testComplicatedTournament()
     testEvenMatches()
+    testForOddPlayersTournament()
     print "Success!  All tests pass!"
 
 
