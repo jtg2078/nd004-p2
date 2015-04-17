@@ -251,8 +251,8 @@ def complicatedTournament():
     reportMatch(t1, id4, id1)
     reportMatch(t1, id8, id5)
     correct_pairs = set([frozenset([id3, id6]),
-                         frozenset([id2, id4]),
-                         frozenset([id7, id8]),
+                         frozenset([id7, id2]),
+                         frozenset([id4, id8]),
                          frozenset([id1, id5])])
     verifyStandings(correct_pairs, t1)
     # 3rd round
@@ -260,10 +260,10 @@ def complicatedTournament():
     reportMatch(t1, id2, id4)
     reportMatch(t1, id7, id8)
     reportMatch(t1, id5, id1)
-    correct_pairs = set([frozenset([id3, id2]),
-                         frozenset([id6, id7]),
-                         frozenset([id4, id5]),
-                         frozenset([id8, id1])])
+    correct_pairs = set([frozenset([id3, id6]),
+                         frozenset([id7, id2]),
+                         frozenset([id8, id4]),
+                         frozenset([id5, id1])])
     verifyStandings(correct_pairs, t1)
     print "10. After 3 rounds match, tournament should produce expected standings"
 

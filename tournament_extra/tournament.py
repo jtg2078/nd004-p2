@@ -146,36 +146,10 @@ def tournamentPlayerStandings(tournament):
         select
             tournament_players.id,
             players.name,
-            COALESCE(wins, 0) as wins,
-            COALESCE(wins, 0) + COALESCE(losses, 0) as matches
+            tournament_players.wins,
+            tournament_players.matches
         from
             tournament_players
-            left join
-                (
-                    select
-                        winner, count(winner) as wins
-                    from
-                        matches
-                    where
-                        tournament = %(tournament)s
-                    group by
-                        winner
-                ) as winners
-            on
-                tournament_players.id = winners.winner
-            left join
-                (
-                    select
-                        loser, count(loser) as losses
-                    from
-                        matches
-                    where
-                        tournament = %(tournament)s
-                    group by
-                        loser
-                ) as losers
-            on
-                tournament_players.id = losers.loser
             join
                 players
             on
@@ -184,6 +158,7 @@ def tournamentPlayerStandings(tournament):
             tournament_players.tournament = %(tournament)s
         order by
             wins desc,
+            opponent_match_wins(tournament_players.id) desc,
             tournament_players.id
     """, {'tournament': tournament})
     rows = c.fetchall()
@@ -201,6 +176,8 @@ def reportMatch(tournament, winner, loser):
     db = connect()
     c = db.cursor()
     c.execute("insert into matches (tournament, winner, loser) values (%s, %s, %s)", (tournament, winner, loser))
+    c.execute("update tournament_players set wins = wins + 1, matches = matches + 1 where id = %s", (winner, ))
+    c.execute("update tournament_players set matches = matches + 1 where id = %s", (loser, ))
     db.commit()
     db.close()
 
