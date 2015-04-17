@@ -209,7 +209,7 @@ def testMultipleTournaments():
     print "9. After one match, players with one win are paired in two different tournament"
 
 
-def complicatedTournament():
+def testComplicatedTournament():
     deleteMatches()
     deletePlayers()
     deleteTournamentPlayers()
@@ -268,17 +268,57 @@ def complicatedTournament():
     print "10. After 3 rounds match, tournament should produce expected standings"
 
 
+def testEvenMatches():
+    deleteMatches()
+    deletePlayers()
+    deleteTournamentPlayers()
+    deleteTournaments()
+    # players
+    a = registerPlayer("A")
+    b = registerPlayer("B")
+    c = registerPlayer("C")
+    d = registerPlayer("D")
+    e = registerPlayer("E")
+    f = registerPlayer("F")
+    g = registerPlayer("G")
+    h = registerPlayer("H")
+    # tournament
+    t1 = registerTournament('Panda Express Cock Magic')
+    registerTournamentPlayer(a, t1)
+    registerTournamentPlayer(b, t1)
+    registerTournamentPlayer(c, t1)
+    registerTournamentPlayer(d, t1)
+    registerTournamentPlayer(e, t1)
+    registerTournamentPlayer(f, t1)
+    registerTournamentPlayer(g, t1)
+    registerTournamentPlayer(h, t1)
+    standings = tournamentPlayerStandings(t1)
+    [id1, id2, id3, id4, id5, id6, id7, id8] = [row[0] for row in standings]
+    # 1st round
+    reportMatch(t1, id1, id2)
+    reportTiedMatch(t1, id3, id4)
+    reportTiedMatch(t1, id5, id6)
+    reportMatch(t1, id7, id8)
+    correct_pairs = set([frozenset([id1, id7]),
+                         frozenset([id2, id3]),
+                         frozenset([id4, id5]),
+                         frozenset([id6, id8])])
+    verifyStandings(correct_pairs, t1)
+    print "11. With two tied mathces, players with one win should be paired"
+
+
 if __name__ == '__main__':
-    testDeleteMatches()
-    testDelete()
-    testCount()
-    testRegister()
-    testRegisterCountDelete()
-    testStandingsBeforeMatches()
-    testReportMatches()
-    testPairings()
-    testMultipleTournaments()
-    complicatedTournament()
+    # testDeleteMatches()
+    # testDelete()
+    # testCount()
+    # testRegister()
+    # testRegisterCountDelete()
+    # testStandingsBeforeMatches()
+    # testReportMatches()
+    # testPairings()
+    # testMultipleTournaments()
+    # testComplicatedTournament()
+    testEvenMatches()
     print "Success!  All tests pass!"
 
 

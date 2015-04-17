@@ -182,6 +182,22 @@ def reportMatch(tournament, winner, loser):
     db.close()
 
 
+def reportTiedMatch(tournament, p1, p2):
+    """Records the outcome of a single match between two players.
+
+    Args:
+      p1:  the id number of the player 1
+      p2:  the id number of the player 2
+    """
+    db = connect()
+    c = db.cursor()
+    c.execute("insert into matches (tournament, p1, p2) values (%s, %s, %s)", (tournament, p1, p2))
+    c.execute("update tournament_players set matches = matches + 1 where id = %s", (p1, ))
+    c.execute("update tournament_players set matches = matches + 1 where id = %s", (p2, ))
+    db.commit()
+    db.close()
+
+
 def swissPairings(tournament):
     """Returns a list of pairs of players for the next round of a match.
   

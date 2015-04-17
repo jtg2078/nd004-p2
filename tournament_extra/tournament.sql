@@ -40,6 +40,8 @@ create table matches(
   id serial primary key,
   tournament integer references tournaments(id) ON DELETE CASCADE,
   winner text references tournament_players(id) ON DELETE CASCADE,
+  p1 text references tournament_players(id) ON DELETE CASCADE,
+  p2 text references tournament_players(id) ON DELETE CASCADE,
   loser text references tournament_players(id) ON DELETE CASCADE
 );
 
