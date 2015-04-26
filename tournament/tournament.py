@@ -137,8 +137,8 @@ def swissPairings():
         name2: the second player's name
     """
     standings = playerStandings()
-    pairs =  [(standings[x][0],
-               standings[x][1],
-               standings[x+1][0],
-               standings[x+1][1]) for x in xrange(0, len(standings), 2)]
+    pairs = [(standings[x][0],
+              standings[x][1],
+              standings[x+1][0],
+              standings[x+1][1]) for x in xrange(0, len(standings), 2)]
     return pairs
