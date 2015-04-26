@@ -6,6 +6,9 @@
 -- You can write comments in this file by starting them with two dashes, like
 -- these lines here.
 
+-- switch to correct db (not sure if this syntax works)
+\c tournament
+
 -- reset everything
 drop table IF EXISTS players CASCADE;
 drop table IF EXISTS matches CASCADE;
