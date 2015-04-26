@@ -11,35 +11,42 @@ def connect():
     return psycopg2.connect("dbname=tournament")
 
 
-def deleteMatches():
+def connect_db(func):
+    """decorator to streamline db connection related code"""
+    def connect_db_and_call(*args, **kwargs):
+        db = connect()
+        c = db.cursor()
+        kwargs['c'] = c
+        result = func(*args, **kwargs)
+        c.close()
+        db.commit()
+        db.close()
+        return result
+    return connect_db_and_call
+
+
+@connect_db
+def deleteMatches(c=None):
     """Remove all the match records from the database."""
-    db = connect()
-    c = db.cursor()
     c.execute("delete from matches")
-    db.commit()
-    db.close()
 
 
-def deletePlayers():
+@connect_db
+def deletePlayers(c=None):
     """Remove all the player records from the database."""
-    db = connect()
-    c = db.cursor()
     c.execute("delete from players")
-    db.commit()
-    db.close()
 
 
-def countPlayers():
+@connect_db
+def countPlayers(c=None):
     """Returns the number of players currently registered."""
-    db = connect()
-    c = db.cursor()
     c.execute("select count(*) from players")
     row = c.fetchone()
-    db.close()
     return int(row[0])
 
 
-def registerPlayer(name):
+@connect_db
+def registerPlayer(name, c=None):
     """Adds a player to the tournament database.
   
     The database assigns a unique serial id number for the player.  (This
@@ -48,14 +55,11 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
-    db = connect()
-    c = db.cursor()
     c.execute("insert into players (name) values (%s);", (name,))
-    db.commit()
-    db.close()
 
 
-def playerStandings():
+@connect_db
+def playerStandings(c=None):
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
@@ -68,8 +72,6 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    db = connect()
-    c = db.cursor()
     c.execute("""
         select
             id, name,
@@ -83,22 +85,18 @@ def playerStandings():
             wins desc;
     """)
     rows = c.fetchall()
-    db.close()
     return rows
 
 
-def reportMatch(winner, loser):
+@connect_db
+def reportMatch(winner, loser, c=None):
     """Records the outcome of a single match between two players.
 
     Args:
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    db = connect()
-    c = db.cursor()
     c.execute("insert into matches (winner, loser) values (%s, %s)", (winner, loser))
-    db.commit()
-    db.close()
 
 
 def swissPairings():
