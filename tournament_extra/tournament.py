@@ -199,7 +199,7 @@ def reportTiedMatch(tournament, p1, p2):
     db.close()
 
 
-def reportByeMatch(tournament, winner):
+def reportByeMatch(winner):
     """Records the outcome of a bye match.
 
     Args:
@@ -249,8 +249,8 @@ def swissPairings(tournament):
                 break
         if player_found is False:
             raise ValueError("Unable to setup bye match, every players already had bye match")
-    pairs =  [(standings[x][0],
-               standings[x][1],
-               standings[x+1][0],
-               standings[x+1][1]) for x in xrange(0, len(standings), 2)]
+    pairs = [(standings[x][0],
+              standings[x][1],
+              standings[x+1][0],
+              standings[x+1][1]) for x in xrange(0, len(standings), 2)]
     return pairs

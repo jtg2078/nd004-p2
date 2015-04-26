@@ -4,8 +4,9 @@
 
 from tournament import *
 
-# helpers
+
 def verifyStandings(correct_pairs, tournament):
+    """helper methods"""
     pairings = swissPairings(tournament)
     num_pairs = len(correct_pairs)
     if len(pairings) != num_pairs:
@@ -325,7 +326,7 @@ def testForOddPlayersTournament():
     [id1, id2, id3] = [row[0] for row in standings]
     # 1st round
     reportMatch(t1, id2, id1)
-    reportByeMatch(t1, id3)
+    reportByeMatch(id3)
     correct_pairs = set([frozenset([id2, 'bye']),
                          frozenset([id3, id1])])
     verifyStandings(correct_pairs, t1)
@@ -346,5 +347,3 @@ if __name__ == '__main__':
     testEvenMatches()
     testForOddPlayersTournament()
     print "Success!  All tests pass!"
-
-
