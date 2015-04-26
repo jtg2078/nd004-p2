@@ -77,28 +77,8 @@ def playerStandings():
             COALESCE(wins, 0) + COALESCE(losses, 0) as matches
         from
             players
-            left join
-                (
-                    select
-                        winner, count(winner) as wins
-                    from
-                        matches
-                    group by
-                        winner
-                ) as winners
-            on
-                players.id = winners.winner
-            left join
-                (
-                    select
-                        loser, count(loser) as losses
-                    from
-                        matches
-                    group by
-                        loser
-                ) as losers
-            on
-                players.id = losers.loser
+                left join winners on players.id = winners.winner
+                left join losers on players.id = losers.loser
         order by
             wins desc;
     """)
