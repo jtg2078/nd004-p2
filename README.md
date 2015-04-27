@@ -69,4 +69,9 @@ python tournament_test.py
     * [Intro To Relational Databases](http://jtg2078.github.io/relational-db/elements-of-sql.html)
     * [Python DB-API Quick Reference](http://jtg2078.github.io/relational-db/python-db-api.html)
     * [Normalized Design](http://jtg2078.github.io/relational-db/deeper-into-sql.html)
+* to be investigated
+    * [Blossom algorithm](http://en.wikipedia.org/wiki/Blossom_algorithm)
+    * [max_weight_matching](http://networkx.github.io/documentation/networkx-1.9.1/reference/generated/networkx.algorithms.matching.max_weight_matching.html)
+    * [Matching pairs engine, how do you make a comprehensive engine?](http://discussions.udacity.com/t/matching-pairs-engine-how-do-you-make-a-comprehensive-engine/4883)
+    
 
